@@ -44,6 +44,7 @@ class PlayerGestureHandler(private val context: Context, private val window: Win
                         layoutParams.screenBrightness = newBrightness
                         it.attributes = layoutParams
                     }
+                    accumulatedDragY = 0f
                 }
             } else {
                 // Volume
@@ -52,11 +53,9 @@ class PlayerGestureHandler(private val context: Context, private val window: Win
                 if (newVolume != currentVolume) {
                     currentVolume = newVolume
                     audioManager.setStreamVolume(AudioManager.STREAM_MUSIC, newVolume, 0)
+                    accumulatedDragY = 0f
                 }
             }
-            
-            // Reset accumulator after converting to volume/brightness change
-            accumulatedDragY = 0f
         }
     }
 }

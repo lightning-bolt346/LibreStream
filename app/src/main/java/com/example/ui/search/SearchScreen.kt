@@ -124,8 +124,8 @@ fun SearchScreen(
                             if (item.type == "stream" || item.type == "video") { // api uses "stream" or "video" sometimes
                                 val videoId = item.url.substringAfter("?v=")
                                 VideoCard(
-                                    title = item.title,
-                                    uploaderName = item.uploaderName ?: "",
+                                    title = item.displayTitle,
+                                    uploaderName = item.uploaderName,
                                     thumbnailUrl = item.thumbnailUrl,
                                     uploaderAvatarUrl = item.uploaderAvatar,
                                     views = item.views,
@@ -136,7 +136,7 @@ fun SearchScreen(
                                 // Channel or Playlist rendering not fully implemented here
                                 // For MVP we can just show title and skip
                                 ListItem(
-                                    headlineContent = { Text(item.title) },
+                                    headlineContent = { Text(item.displayTitle) },
                                     supportingContent = { Text("Type: ${item.type}") }
                                 )
                             }

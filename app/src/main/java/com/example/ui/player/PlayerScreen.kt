@@ -76,105 +76,133 @@ fun PlayerScreen(
             val gestureHandler = remember { PlayerGestureHandler(context, activity?.window) }
             val screenHeight = LocalContext.current.resources.displayMetrics.heightPixels.toFloat()
             
-            AndroidView(
-                factory = { ctx ->
-                    PlayerView(ctx).apply {
-                        useController = false
-                        layoutParams = FrameLayout.LayoutParams(
-                            ViewGroup.LayoutParams.MATCH_PARENT,
-                            ViewGroup.LayoutParams.MATCH_PARENT
-                        )
-                        resizeMode = AspectRatioFrameLayout.RESIZE_MODE_FIT
-                    }
-                },
-                update = { playerView ->
-                    if (playerView.player != mediaController) {
-                        playerView.player = mediaController
-                    }
-                },
-                modifier = Modifier
-                    .fillMaxSize()
-                    .pointerInput(Unit) {
-                        try {
-                            detectTapGestures(
-                                onTap = { showControls = !showControls },
-                                onDoubleTap = { offset ->
-                                    val prefs = com.example.service.PlayerPreferences(context)
-                                    if (!prefs.doubleTapSeekEnabled) return@detectTapGestures
-                                    val inc = prefs.seekIncrement
-                                    val middle = size.width / 2
-                                    if (offset.x < middle) {
-                                        // Seek backward
-                                        mediaController?.seekTo(playerState.currentTime - inc)
-                                    } else {
-                                        // Seek forward
-                                        mediaController?.seekTo(playerState.currentTime + inc)
+            val needsWebView = (uiState as? PlayerUiState.Success)?.videoInfo?.let { 
+                it.hls.isEmpty() && it.videoStreams.isEmpty()
+            } ?: false
+
+            val lifecycleOwner = androidx.lifecycle.compose.LocalLifecycleOwner.current
+
+            if (needsWebView) {
+                AndroidView(
+                    factory = { ctx ->
+                        com.pierfrancescosoffritti.androidyoutubeplayer.core.player.views.YouTubePlayerView(ctx).apply {
+                            layoutParams = FrameLayout.LayoutParams(
+                                ViewGroup.LayoutParams.MATCH_PARENT,
+                                ViewGroup.LayoutParams.MATCH_PARENT
+                            )
+                            lifecycleOwner.lifecycle.addObserver(this)
+                            addYouTubePlayerListener(object : com.pierfrancescosoffritti.androidyoutubeplayer.core.player.listeners.AbstractYouTubePlayerListener() {
+                                override fun onReady(youTubePlayer: com.pierfrancescosoffritti.androidyoutubeplayer.core.player.YouTubePlayer) {
+                                    youTubePlayer.loadVideo(videoId, 0f)
+                                }
+                            })
+                        }
+                    },
+                    modifier = Modifier.fillMaxSize()
+                )
+            } else {
+                AndroidView(
+                    factory = { ctx ->
+                        PlayerView(ctx).apply {
+                            useController = false
+                            layoutParams = FrameLayout.LayoutParams(
+                                ViewGroup.LayoutParams.MATCH_PARENT,
+                                ViewGroup.LayoutParams.MATCH_PARENT
+                            )
+                            resizeMode = AspectRatioFrameLayout.RESIZE_MODE_FIT
+                        }
+                    },
+                    update = { playerView ->
+                        if (playerView.player != mediaController) {
+                            playerView.player = mediaController
+                        }
+                    },
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .pointerInput(Unit) {
+                            try {
+                                detectTapGestures(
+                                    onTap = { showControls = !showControls },
+                                    onDoubleTap = { offset ->
+                                        val prefs = com.example.service.PlayerPreferences(context)
+                                        if (!prefs.doubleTapSeekEnabled) return@detectTapGestures
+                                        val inc = prefs.seekIncrement
+                                        val middle = size.width / 2
+                                        if (offset.x < middle) {
+                                            // Seek backward
+                                            mediaController?.seekTo(playerState.currentTime - inc)
+                                        } else {
+                                            // Seek forward
+                                            mediaController?.seekTo(playerState.currentTime + inc)
+                                        }
                                     }
-                                }
-                            )
-                        } catch (e: Exception) {
-                            e.printStackTrace()
+                                )
+                            } catch (e: Exception) {
+                                e.printStackTrace()
+                            }
                         }
-                    }
-                    .pointerInput(Unit) {
-                        try {
-                            detectDragGestures(
-                                onDragStart = { gestureHandler.onDragStart() },
-                                onDrag = { change, dragAmount ->
-                                    val prefs = com.example.service.PlayerPreferences(context)
-                                    if (!prefs.swipeControlsEnabled) return@detectDragGestures
-                                    val isLeftSide = change.position.x < (size.width / 2)
-                                    gestureHandler.onVerticalDrag(dragAmount.y, screenHeight, isLeftSide)
-                                }
-                            )
-                        } catch (e: Exception) {
-                            e.printStackTrace()
+                        .pointerInput(Unit) {
+                            try {
+                                detectDragGestures(
+                                    onDragStart = { gestureHandler.onDragStart() },
+                                    onDrag = { change, dragAmount ->
+                                        val prefs = com.example.service.PlayerPreferences(context)
+                                        if (!prefs.swipeControlsEnabled) return@detectDragGestures
+                                        val isLeftSide = change.position.x < (size.width / 2)
+                                        gestureHandler.onVerticalDrag(dragAmount.y, screenHeight, isLeftSide)
+                                    }
+                                )
+                            } catch (e: Exception) {
+                                e.printStackTrace()
+                            }
                         }
-                    }
-            )
+                )
+            }
             
-            PlayerControls(
-                modifier = Modifier.fillMaxSize(),
-                isVisible = showControls,
-                isPlaying = playerState.isPlaying,
-                title = (uiState as? PlayerUiState.Success)?.videoInfo?.title ?: "",
-                playbackState = playerState.playbackState,
-                onPauseToggle = {
-                    if (playerState.isPlaying) {
-                        mediaController?.pause()
-                    } else {
-                        mediaController?.play()
-                    }
-                },
-                onBack = { 
-                    if (isFullscreen) {
-                        isFullscreen = false
-                    } else {
-                        onNavigateUp() 
-                    }
-                },
-                onFullscreenToggle = {
-                    isFullscreen = !isFullscreen
-                },
-                isFullscreen = isFullscreen,
-                currentTime = playerState.currentTime,
-                totalTime = playerState.totalTime,
-                onSeekTo = { mediaController?.seekTo(it) },
-                onPipToggle = {
-                    val activity = context.findActivity()
-                    if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
-                        try {
-                            activity?.enterPictureInPictureMode(
-                                android.app.PictureInPictureParams.Builder()
-                                    .setAspectRatio(android.util.Rational(16, 9))
-                                    .build()
-                            )
-                        } catch (e: Exception) {
-                            e.printStackTrace()
+            if (!needsWebView) {
+                PlayerControls(
+                    modifier = Modifier.fillMaxSize(),
+                    isVisible = showControls,
+                    isPlaying = playerState.isPlaying,
+                    title = (uiState as? PlayerUiState.Success)?.videoInfo?.title ?: "",
+                    playbackState = playerState.playbackState,
+                    onPauseToggle = {
+                        if (playerState.isPlaying) {
+                            mediaController?.pause()
+                        } else {
+                            mediaController?.play()
+                        }
+                    },
+                    onBack = { 
+                        if (isFullscreen) {
+                            isFullscreen = false
+                        } else {
+                            onNavigateUp() 
+                        }
+                    },
+                    onFullscreenToggle = {
+                        isFullscreen = !isFullscreen
+                    },
+                    isFullscreen = isFullscreen,
+                    currentTime = playerState.currentTime,
+                    totalTime = playerState.totalTime,
+                    onSeekTo = { mediaController?.seekTo(it) },
+                    onPipToggle = {
+                        val activity = context.findActivity()
+                        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
+                            try {
+                                activity?.enterPictureInPictureMode(
+                                    android.app.PictureInPictureParams.Builder()
+                                        .setAspectRatio(android.util.Rational(16, 9))
+                                        .build()
+                                )
+                            } catch (e: Exception) {
+                                e.printStackTrace()
+                            }
                         }
                     }
-                }
-            )
+                )
+            }
         }
 
         // Details Area
@@ -196,7 +224,7 @@ fun PlayerScreen(
                         LaunchedEffect(info, mediaController) {
                             mediaController?.let { controller ->
                                 if (controller.currentMediaItem?.mediaId != videoId) {
-                                    val url = info.hls ?: info.videoStreams?.firstOrNull { it.videoOnly == false }?.url
+                                    val url = info.hls.takeIf { it.isNotEmpty() } ?: info.videoStreams.firstOrNull { it.videoOnly == false }?.url
                                     if (url != null) {
                                         val mediaItem = MediaItem.Builder()
                                             .setMediaId(videoId)

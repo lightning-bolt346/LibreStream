@@ -130,4 +130,5 @@ dependencies {
   implementation(libs.androidx.media3.ui)
   implementation(libs.androidx.media3.datasource.okhttp)
   implementation(libs.androidx.media3.session)
+  implementation(libs.youtube.player.core)
 }

@@ -43,7 +43,7 @@ class AppContainer(private val context: Context) {
 
     private val retrofit: Retrofit by lazy {
         Retrofit.Builder()
-            .baseUrl("https://pipedapi.kavin.rocks/")
+            .baseUrl("https://api.piped.private.coffee/")
             .client(okHttpClient)
             .addConverterFactory(MoshiConverterFactory.create(moshi).asLenient())
             .build()
