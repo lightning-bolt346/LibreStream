@@ -9,7 +9,9 @@ class InstanceInterceptor : Interceptor {
     
     private val instances = listOf(
         "https://pipedapi.kavin.rocks/",
-        "https://pipedapi.drgns.space/"
+        "https://pipedapi.tokhmi.xyz/",
+        "https://pipedapi.astartes.nl/",
+        "https://pipedapi.smnz.de/"
     )
     
     private var currentIndex = 0
