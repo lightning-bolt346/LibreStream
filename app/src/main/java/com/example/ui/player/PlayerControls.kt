@@ -69,6 +69,9 @@ fun PlayerControls(
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis
                 )
+                TextButton(onClick = { /* TODO speed selector */ }) {
+                    Text("1x", color = Color.White)
+                }
                 IconButton(onClick = { /* TODO show menu */ }) {
                     Icon(Icons.Filled.MoreVert, contentDescription = "More options", tint = Color.White)
                 }

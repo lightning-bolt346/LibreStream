@@ -35,12 +35,15 @@ class PlayerGestureHandler(private val context: Context, private val window: Win
             if (isLeftSide) {
                 // Brightness
                 val newBrightness = (currentBrightness + percentage).coerceIn(0.01f, 1f)
-                currentBrightness = newBrightness // update current
                 
-                window?.let {
-                    val layoutParams = it.attributes
-                    layoutParams.screenBrightness = newBrightness
-                    it.attributes = layoutParams
+                // Only update WindowManager if brightness changed by at least 3% to prevent InputDispatcher flood
+                if (abs(newBrightness - currentBrightness) > 0.03f) {
+                    currentBrightness = newBrightness // update current
+                    window?.let {
+                        val layoutParams = it.attributes
+                        layoutParams.screenBrightness = newBrightness
+                        it.attributes = layoutParams
+                    }
                 }
             } else {
                 // Volume

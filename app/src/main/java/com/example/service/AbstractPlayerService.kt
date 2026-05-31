@@ -17,6 +17,7 @@ abstract class AbstractPlayerService : MediaSessionService() {
 
     protected var player: ExoPlayer? = null
     protected var mediaSession: MediaSession? = null
+    protected lateinit var trackSelector: androidx.media3.exoplayer.trackselection.DefaultTrackSelector
 
     override fun onCreate() {
         super.onCreate()
@@ -28,9 +29,12 @@ abstract class AbstractPlayerService : MediaSessionService() {
             .setUserAgent(userAgent)
             
         val mediaSourceFactory = DefaultMediaSourceFactory(dataSourceFactory)
+        
+        trackSelector = androidx.media3.exoplayer.trackselection.DefaultTrackSelector(this)
 
         player = ExoPlayer.Builder(this)
             .setMediaSourceFactory(mediaSourceFactory)
+            .setTrackSelector(trackSelector)
             .setAudioAttributes(
                 AudioAttributes.Builder()
                     .setContentType(C.AUDIO_CONTENT_TYPE_MOVIE)

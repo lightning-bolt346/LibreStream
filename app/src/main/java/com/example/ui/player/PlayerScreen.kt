@@ -69,7 +69,7 @@ fun PlayerScreen(
         Box(
             modifier = Modifier
                 .fillMaxWidth()
-                .aspectRatio(if (isFullscreen) (LocalContext.current.resources.displayMetrics.widthPixels.toFloat() / LocalContext.current.resources.displayMetrics.heightPixels.toFloat()) else 16f / 9f)
+                .then(if (isFullscreen) Modifier.fillMaxSize() else Modifier.aspectRatio(16f / 9f))
                 .background(Color.Black)
         ) {
             val activity = context.findActivity()
@@ -99,13 +99,16 @@ fun PlayerScreen(
                             detectTapGestures(
                                 onTap = { showControls = !showControls },
                                 onDoubleTap = { offset ->
+                                    val prefs = com.example.service.PlayerPreferences(context)
+                                    if (!prefs.doubleTapSeekEnabled) return@detectTapGestures
+                                    val inc = prefs.seekIncrement
                                     val middle = size.width / 2
                                     if (offset.x < middle) {
                                         // Seek backward
-                                        mediaController?.seekTo(playerState.currentTime - 10000)
+                                        mediaController?.seekTo(playerState.currentTime - inc)
                                     } else {
                                         // Seek forward
-                                        mediaController?.seekTo(playerState.currentTime + 10000)
+                                        mediaController?.seekTo(playerState.currentTime + inc)
                                     }
                                 }
                             )
@@ -118,6 +121,8 @@ fun PlayerScreen(
                             detectDragGestures(
                                 onDragStart = { gestureHandler.onDragStart() },
                                 onDrag = { change, dragAmount ->
+                                    val prefs = com.example.service.PlayerPreferences(context)
+                                    if (!prefs.swipeControlsEnabled) return@detectDragGestures
                                     val isLeftSide = change.position.x < (size.width / 2)
                                     gestureHandler.onVerticalDrag(dragAmount.y, screenHeight, isLeftSide)
                                 }
