@@ -1,0 +1,6 @@
+{
+  "name": "LibreTube",
+  "description": "Privacy-focused YouTube client",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
