@@ -96,4 +96,8 @@ class AppContainer(private val context: Context) {
     val settingsRepository: SettingsRepository by lazy {
         SettingsRepository(context)
     }
+
+    val playerManager: com.example.service.PlayerManager by lazy {
+        com.example.service.PlayerManager(context).apply { initialize() }
+    }
 }

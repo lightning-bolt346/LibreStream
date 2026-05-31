@@ -9,11 +9,7 @@ class InstanceInterceptor : Interceptor {
     
     private val instances = listOf(
         "https://pipedapi.kavin.rocks/",
-        "https://pipedapi.smnz.de/",
-        "https://pipedapi.drgns.space/",
-        "https://api.piped.yt/",
-        "https://pipedapi.moomoo.me/",
-        "https://pipedapi.syncpundit.io/"
+        "https://pipedapi.drgns.space/"
     )
     
     private var currentIndex = 0
@@ -23,56 +19,25 @@ class InstanceInterceptor : Interceptor {
         currentIndex = (currentIndex + 1) % instances.size
         return instances[currentIndex]
     }
-    
-    @Synchronized
-    private fun getCurrentInstance(): String {
-        return instances[currentIndex]
-    }
 
     override fun intercept(chain: Interceptor.Chain): Response {
-        var request = chain.request()
-        var currentHost = getCurrentInstance().toHttpUrlOrNull()?.host ?: return chain.proceed(request)
+        val request = chain.request()
+        val currentHost = instances[currentIndex].toHttpUrlOrNull()?.host ?: return chain.proceed(request)
         
-        var newUrl = request.url.newBuilder().host(currentHost).build()
-        request = request.newBuilder().url(newUrl).build()
+        val newUrl = request.url.newBuilder().host(currentHost).build()
+        val newRequest = request.newBuilder().url(newUrl).build()
         
-        var response: Response? = null
-        var error: IOException? = null
-        
-        val maxRetries = instances.size
-        var attempt = 0
-        
-        while (attempt < maxRetries) {
-            try {
-                response = chain.proceed(request)
-                
-                val contentType = response.header("Content-Type")
-                val isJson = contentType?.contains("json", ignoreCase = true) == true
-                
-                if (response.isSuccessful && isJson) {
-                    return response
-                } else {
-                    response.close() // Close before retrying
-                    if (attempt == maxRetries - 1) {
-                        break
-                    }
-                    currentHost = getNextInstance().toHttpUrlOrNull()?.host ?: currentHost
-                    newUrl = request.url.newBuilder().host(currentHost).build()
-                    request = request.newBuilder().url(newUrl).build()
-                }
-            } catch (e: Exception) {
-                error = if (e is IOException) e else IOException(e)
-                if (e.message?.contains("Canceled", ignoreCase = true) == true) {
-                    throw error
-                }
-                currentHost = getNextInstance().toHttpUrlOrNull()?.host ?: currentHost
-                newUrl = request.url.newBuilder().host(currentHost).build()
-                request = request.newBuilder().url(newUrl).build()
+        try {
+            val response = chain.proceed(newRequest)
+            if (!response.isSuccessful) {
+                // If the first attempt fails, advance the instance index for the next request
+                getNextInstance()
             }
-            attempt++
+            return response
+        } catch (e: Exception) {
+            getNextInstance()
+            throw e
         }
-        
-        if (response != null) return response
-        throw error ?: IOException("Cannot connect to Piped API: Check network or API availability.")
     }
 }
+

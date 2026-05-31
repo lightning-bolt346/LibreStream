@@ -188,7 +188,7 @@ class MainActivity : ComponentActivity() {
                         composable(Screen.Player.route) { backStackEntry ->
                             val videoId = backStackEntry.arguments?.getString("videoId") ?: ""
                             val viewModel: PlayerViewModel = viewModel(
-                                factory = PlayerViewModel.provideFactory(appContainer.appRepository)
+                                factory = PlayerViewModel.provideFactory(appContainer.appRepository, appContainer.playerManager)
                             )
                             PlayerScreen(
                                 videoId = videoId,

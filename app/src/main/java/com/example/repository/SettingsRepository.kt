@@ -21,4 +21,16 @@ class SettingsRepository(context: Context) {
 
     fun isLocalExtraction(): Boolean = prefs.getBoolean("local_extraction", false)
     fun setLocalExtraction(enabled: Boolean) = prefs.edit().putBoolean("local_extraction", enabled).apply()
+
+    fun isSwipeControlsEnabled(): Boolean = prefs.getBoolean("player_swipe_controls", true)
+    fun setSwipeControlsEnabled(enabled: Boolean) = prefs.edit().putBoolean("player_swipe_controls", enabled).apply()
+
+    fun isFullscreenGesturesEnabled(): Boolean = prefs.getBoolean("fullscreen_gestures", true)
+    fun setFullscreenGesturesEnabled(enabled: Boolean) = prefs.edit().putBoolean("fullscreen_gestures", enabled).apply()
+
+    fun isDoubleTapSeekEnabled(): Boolean = prefs.getBoolean("double_tap_seek", true)
+    fun setDoubleTapSeekEnabled(enabled: Boolean) = prefs.edit().putBoolean("double_tap_seek", enabled).apply()
+
+    fun getBehaviorWhenMinimized(): String = prefs.getString("behavior_when_minimized", "pip") ?: "pip"
+    fun setBehaviorWhenMinimized(behavior: String) = prefs.edit().putString("behavior_when_minimized", behavior).apply()
 }

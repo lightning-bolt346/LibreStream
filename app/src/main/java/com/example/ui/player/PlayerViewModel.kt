@@ -11,11 +11,14 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 
 class PlayerViewModel(
-    private val repository: AppRepository
+    private val repository: AppRepository,
+    private val playerManager: com.example.service.PlayerManager
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow<PlayerUiState>(PlayerUiState.Loading)
     val uiState: StateFlow<PlayerUiState> = _uiState
+
+    val mediaController: StateFlow<androidx.media3.session.MediaController?> = playerManager.mediaController
 
     fun loadVideo(videoId: String) {
         viewModelScope.launch {
@@ -39,11 +42,11 @@ class PlayerViewModel(
     }
 
     companion object {
-        fun provideFactory(repository: AppRepository): ViewModelProvider.Factory =
+        fun provideFactory(repository: AppRepository, playerManager: com.example.service.PlayerManager): ViewModelProvider.Factory =
             object : ViewModelProvider.Factory {
                 @Suppress("UNCHECKED_CAST")
                 override fun <T : ViewModel> create(modelClass: Class<T>): T {
-                    return PlayerViewModel(repository) as T
+                    return PlayerViewModel(repository, playerManager) as T
                 }
             }
     }
